@@ -14,25 +14,10 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build & Test Docker Image') {
             steps {
                 dir('app') {
-                    sh 'npm install'
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                dir('app') {
-                    sh 'npm test'
-                }
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                dir('app') {
+                    // Dockerfile-ul va rula intern npm install si npm test in timpul build-ului
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
                     sh "docker tag ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
@@ -51,6 +36,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
+                // Inlocuim tag-ul in fisierul k8s/deployment.yaml
                 sh "sed -i 's|<DOCKER_HUB_USERNAME>/simple-todo-app:latest|${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
                 sh "kubectl apply -f k8s/deployment.yaml"
                 sh "kubectl apply -f k8s/service.yaml"
