@@ -5,6 +5,8 @@ pipeline {
         DOCKER_HUB_USER = 'stefanaafteni'
         IMAGE_NAME      = 'simple-todo-app'
         IMAGE_TAG       = "${env.BUILD_NUMBER}"
+        // Forțăm utilizarea IP-ului de Minikube direct în comenzi
+        KUBE_SERVER     = 'https://192.168.49.2:8443'
     }
 
     stages {
@@ -17,7 +19,6 @@ pipeline {
         stage('Build & Test Docker Image') {
             steps {
                 dir('app') {
-                    // Dockerfile-ul va rula intern npm install si npm test in timpul build-ului
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ."
                     sh "docker tag ${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
@@ -36,11 +37,13 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // Inlocuim tag-ul in fisierul k8s/deployment.yaml
                 sh "sed -i 's|<DOCKER_HUB_USERNAME>/simple-todo-app:latest|${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
-                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/deployment.yaml"
-                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/service.yaml"
-                sh "kubectl rollout status deployment/todo-app-deployment"
+                
+                // Folosim parametrii direcți pentru a ignora complet orice fișier local de config defectuos
+                sh "kubectl apply --server=${KUBE_SERVER} --insecure-skip-tls-verify=true -f k8s/deployment.yaml"
+                sh "kubectl apply --server=${KUBE_SERVER} --insecure-skip-tls-verify=true -f k8s/service.yaml"
+                
+                sh "kubectl rollout --server=${KUBE_SERVER} --insecure-skip-tls-verify=true status deployment/todo-app-deployment"
             }
         }
     }
