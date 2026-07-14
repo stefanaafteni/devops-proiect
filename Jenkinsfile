@@ -38,8 +38,8 @@ pipeline {
             steps {
                 // Inlocuim tag-ul in fisierul k8s/deployment.yaml
                 sh "sed -i 's|<DOCKER_HUB_USERNAME>/simple-todo-app:latest|${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
-                sh "kubectl apply -f k8s/deployment.yaml"
-                sh "kubectl apply -f k8s/service.yaml"
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/deployment.yaml"
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/service.yaml"
                 sh "kubectl rollout status deployment/todo-app-deployment"
             }
         }
