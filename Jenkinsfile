@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USER = 'inlocuieste_cu_userul_tau_de_docker_hub'
+        DOCKER_HUB_USER = 'stefanaafteni'
         IMAGE_NAME      = 'simple-todo-app'
         IMAGE_TAG       = "${env.BUILD_NUMBER}"
     }
