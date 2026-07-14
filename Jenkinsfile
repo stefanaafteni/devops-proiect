@@ -35,6 +35,12 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/postgres.yaml"
+                sh "sed -i 's|<DOCKER_HUB_USERNAME>/simple-todo-app:latest|stefanaafteni/simple-todo-app:${BUILD_NUMBER}|'g k8s/deployment.yaml"
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/deployment.yaml"
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/service.yaml"
+                sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/ingress.yaml"
+            }
                 sh "sed -i 's|<DOCKER_HUB_USERNAME>/simple-todo-app:latest|${DOCKER_HUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
                 sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/deployment.yaml"
                 sh "kubectl apply --insecure-skip-tls-verify=true -f k8s/service.yaml"
